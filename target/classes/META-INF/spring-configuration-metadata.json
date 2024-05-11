@@ -1,0 +1,24 @@
+{
+  "groups": [
+    {
+      "name": "spring.application",
+      "type": "com.testTasks.testAssignment.Config$AppConfig",
+      "sourceType": "com.testTasks.testAssignment.Config",
+      "sourceMethod": "appConfig()"
+    },
+    {
+      "name": "spring.datasource",
+      "type": "javax.sql.DataSource",
+      "sourceType": "com.testTasks.testAssignment.Config",
+      "sourceMethod": "dataSource()"
+    }
+  ],
+  "properties": [
+    {
+      "name": "spring.application.age",
+      "type": "java.lang.Integer",
+      "sourceType": "com.testTasks.testAssignment.Config$AppConfig"
+    }
+  ],
+  "hints": []
+}

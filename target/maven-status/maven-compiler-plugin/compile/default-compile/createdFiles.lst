@@ -1,0 +1,15 @@
+com\testTasks\testAssignment\UserDto.class
+com\testTasks\testAssignment\UserMapper.class
+com\testTasks\testAssignment\UserService.class
+com\testTasks\testAssignment\UserRepository.class
+com\testTasks\testAssignment\ApplicationExceptionHandler.class
+com\testTasks\testAssignment\UserController.class
+META-INF\spring-configuration-metadata.json
+com\testTasks\testAssignment\UserUtils.class
+com\testTasks\testAssignment\Filter.class
+com\testTasks\testAssignment\Config$AppConfig.class
+com\testTasks\testAssignment\UserControllerApplication.class
+com\testTasks\testAssignment\UserEntity.class
+com\testTasks\testAssignment\UserNotFoundException.class
+com\testTasks\testAssignment\UserMapperImpl.class
+com\testTasks\testAssignment\Config.class
