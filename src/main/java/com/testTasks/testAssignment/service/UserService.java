@@ -6,6 +6,7 @@ import com.testTasks.testAssignment.model.User;
 import com.testTasks.testAssignment.model.UserRequestDto;
 import com.testTasks.testAssignment.model.UserResponseDto;
 import com.testTasks.testAssignment.repo.UserRepository;
+import jakarta.persistence.Column;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -44,16 +45,16 @@ public class UserService {
         return getResponseEntity(response);
     }
 
-    public ResponseEntity<User> saveUser(UserRequestDto newUser) {
+    public ResponseEntity<UserResponseDto> saveUser(UserRequestDto newUser) {
         User request = mapper.requestDtoToEntity(newUser);
-        User response = repository.save(request);
+        UserResponseDto response = mapper.entityToResponseDto(repository.save(request));
         return getResponseEntity(response);
     }
 
     @Transactional
-    public ResponseEntity<User> updateUserById(Long id, UserRequestDto request) {
+    public ResponseEntity<UserResponseDto> updateUserById(Long id, UserRequestDto request) {
         User updateUser = mapper.requestDtoToEntity(request);
-        User response = repository.findById(id)
+        User result = repository.findById(id)
                 .map(user -> {
                     user.setFirstName(updateUser.getFirstName());
                     user.setLastName(updateUser.getLastName());
@@ -64,15 +65,15 @@ public class UserService {
                     return repository.save(user);
                 })
                 .orElseThrow(() -> new DataNotFoundException("User not found with id = " + id));
+        UserResponseDto response = mapper.entityToResponseDto(result);
         return getResponseEntity(response);
     }
 
-
     @Transactional
-    public ResponseEntity<User> updateFields(Long id, Map<String, Object> updates) {
+    public ResponseEntity<UserResponseDto> updateFields(Long id, Map<String, Object> updates) {
         User user = repository.findById(id).orElseThrow(() -> new DataNotFoundException("User not found with id = " + id));
         applyUpdates(user, updates);
-        User response = repository.save(user);
+        UserResponseDto response = mapper.entityToResponseDto(repository.save(user));
         return getResponseEntity(response);
     }
 
@@ -82,25 +83,43 @@ public class UserService {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    private String getColumnName(Field field) {
+        Column annotation = field.getAnnotation(Column.class);
+        if (annotation != null && !annotation.name().isEmpty()) {
+            return annotation.name();
+        }
+        return field.getName();
+    }
+
     private void applyUpdates(User user, Map<String, Object> updates) {
         Class<?> clazz = user.getClass();
-        updates.forEach((key, value) -> {
+        for (Map.Entry<String, Object> entry : updates.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
             try {
-                Field field = clazz.getDeclaredField(key);
-                field.setAccessible(true);
-                if (field.getType() == LocalDate.class && value instanceof String) {
-                    try {
-                        LocalDate dateValue = LocalDate.parse((String) value, DateTimeFormatter.ISO_LOCAL_DATE);
-                        field.set(user, dateValue);
-                    } catch (DateTimeParseException e) {
-                        throw new IllegalArgumentException("Invalid date format for " + key);
+                Field field = null;
+                for (Field f : clazz.getDeclaredFields()) {
+                    if (getColumnName(f).equals(key)) {
+                        field = f;
+                        break;
                     }
-                } else {
-                    field.set(user, value);
                 }
-            } catch (NoSuchFieldException | IllegalAccessException e) {
+                if (field != null) {
+                    field.setAccessible(true);
+                    if (field.getType() == LocalDate.class && value instanceof String) {
+                        try {
+                            LocalDate dateValue = LocalDate.parse((String) value, DateTimeFormatter.ISO_LOCAL_DATE);
+                            field.set(user, dateValue);
+                        } catch (DateTimeParseException e) {
+                            throw new IllegalArgumentException("Invalid date format for " + key);
+                        }
+                    } else {
+                        field.set(user, value);
+                    }
+                }
+            } catch (IllegalAccessException e) {
                 throw new RuntimeException("Error updating field: " + key, e);
             }
-        });
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.testTasks.testAssignment.rest;
 
 import com.testTasks.testAssignment.config.ApplicationProperties;
+import com.testTasks.testAssignment.exception.ApiError;
 import com.testTasks.testAssignment.exception.UserValidationException;
 import com.testTasks.testAssignment.model.User;
 import com.testTasks.testAssignment.model.UserRequestDto;
@@ -10,8 +11,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -45,23 +48,35 @@ public class UserController {
     private final UserService service;
     private final ApplicationProperties applicationProperties;
 
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Ok", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = UserResponseDto.class))}),
+            @ApiResponse(responseCode = "400", description = "Bad request", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ApiError.class))}),
+            @ApiResponse(responseCode = "404", description = "Not found", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ApiError.class))})
+    })
     @Operation(summary = "Obtaining data about the user by id")
-    @ApiResponse(responseCode = "200", description = "Ok", content = {@Content(mediaType = "application/json",
-            schema = @Schema(implementation = UserResponseDto.class))})
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDto> getUser(@PathVariable Long id) {
         return service.findUserById(id);
     }
 
-    @Operation(summary = "Obtaining user data")
-    @ApiResponse(responseCode = "200", description = "Ok", content = {@Content(mediaType = "application/json",
-            schema = @Schema(implementation = UserResponseDto.class))})
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Ok", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = UserResponseDto.class))}),
+            @ApiResponse(responseCode = "400", description = "Bad request", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ApiError.class))}),
+            @ApiResponse(responseCode = "404", description = "Not found", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ApiError.class))})
+    })
     @Parameters({
             @Parameter(name = "from", description = "Date of birth from which to search for users."),
             @Parameter(name = "to", description = "Date of birth to search for users."),
             @Parameter(name = "limit", description = "Quantity of returned records. Default value = 3"),
             @Parameter(name = "offset", description = "Offset (from which element to return). Default value = 0")
     })
+    @Operation(summary = "Obtaining users data with filter")
     @GetMapping("/")
     public ResponseEntity<List<UserResponseDto>> getAllUsers(
             @RequestParam(required = false, name = "from") LocalDate from,
@@ -80,12 +95,18 @@ public class UserController {
         return service.findAllUsers(from, to, limit, offset);
     }
 
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Ok", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = User.class))}),
+            @ApiResponse(responseCode = "400", description = "Bad request", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ApiError.class))}),
+            @ApiResponse(responseCode = "404", description = "Not found", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ApiError.class))})
+    })
+    @Operation(summary = "Create a new user")
     @PostMapping("/")
-    public ResponseEntity<User> createNew(@Valid @RequestBody UserRequestDto newUser) {
+    public ResponseEntity<UserResponseDto> createNew(@Valid @RequestBody UserRequestDto newUser) {
         requiredFieldValidation(newUser);
-        if (!isValidDateFormat(newUser.getBirthday().toString())) {
-            throw new UserValidationException("Invalid date format. Use the correct YYYY-MM-DD format");
-        }
         if (!isValidBirthday(newUser.getBirthday(), applicationProperties.appConfig().getAge())) {
             throw new UserValidationException("User must be " + applicationProperties.appConfig().getAge()
                     + " years old. Try later");
@@ -93,23 +114,56 @@ public class UserController {
         return service.saveUser(newUser);
     }
 
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Ok", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = User.class))}),
+            @ApiResponse(responseCode = "400", description = "Bad request", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ApiError.class))}),
+            @ApiResponse(responseCode = "404", description = "Not found", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ApiError.class))})
+    })
+    @Operation(summary = "Updating an existing user")
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id,
-                                           @Valid @RequestBody UserRequestDto updateUser) {
+    public ResponseEntity<UserResponseDto> updateUser(@PathVariable Long id,
+                                                      @Valid @RequestBody UserRequestDto updateUser) {
         requiredFieldValidation(updateUser);
-        if (!isValidDateFormat(updateUser.getBirthday().toString())) {
-            throw new UserValidationException("Invalid date format. Use the correct YYYY-MM-DD format");
+        if (!isValidEmail(updateUser.getEmail())) {
+            throw new UserValidationException("Invalid email format");
         }
         if (!isValidBirthday(updateUser.getBirthday(), applicationProperties.appConfig().getAge())) {
             throw new UserValidationException("User must be " + applicationProperties.appConfig().getAge()
-                    + " years old. Try later");
+                    + " years old and the value must be before the current date.");
         }
         return service.updateUserById(id, updateUser);
     }
 
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Ok", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = User.class))}),
+            @ApiResponse(responseCode = "400", description = "Bad request", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ApiError.class))}),
+            @ApiResponse(responseCode = "404", description = "Not found", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ApiError.class))})
+    })
+
+    @Operation(summary = "Update user details",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "User update DTO",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "Example",
+                                    value = "{\"first_name\": \"John\", \"last_name\": \"Doe\"," +
+                                            " \"email\": \"john.doe@example.com\", \"birthday\": \"1990-01-01\"," +
+                                            " \"address\": \"1415 Cedar Lane\", \"phone\": \"567-890-123\"}"
+                            )
+                    )
+            )
+    )
     @PatchMapping("/{id}")
-    public ResponseEntity<User> updateFields(@PathVariable Long id,
-                                             @Valid @RequestBody Map<String, Object> updates) {
+    public ResponseEntity<UserResponseDto> updateFields(@PathVariable Long id,
+                                                        @Valid @RequestBody Map<String, Object> updates) {
         cleanUpdates(updates);
         if (updates.containsKey("email") && !isValidEmail((String) updates.get("email"))) {
             throw new UserValidationException("Invalid email format");
@@ -125,6 +179,14 @@ public class UserController {
         return service.updateFields(id, updates);
     }
 
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Ok"),
+            @ApiResponse(responseCode = "400", description = "Bad request", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ApiError.class))}),
+            @ApiResponse(responseCode = "404", description = "Not found", content = {@Content(mediaType = "application/json",
+                    schema = @Schema(implementation = ApiError.class))})
+    })
+    @Operation(summary = "Soft delete of an existing user")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> removeUser(@PathVariable Long id) {
         return service.deleteUserById(id);

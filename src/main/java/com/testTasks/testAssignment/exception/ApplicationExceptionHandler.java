@@ -9,6 +9,7 @@ import org.springframework.web.context.request.WebRequest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.format.DateTimeParseException;
 
 @ControllerAdvice
 public class ApplicationExceptionHandler {
@@ -30,8 +31,8 @@ public class ApplicationExceptionHandler {
         return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler({IllegalArgumentException.class, RuntimeException.class})
-    public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex, WebRequest request) {
+    @ExceptionHandler({IllegalArgumentException.class, RuntimeException.class, DateTimeParseException.class})
+    public ResponseEntity<ApiError> handleIllegalArgument(Exception ex, WebRequest request) {
         String requestURL = getRequestURL(request);
         ApiError.ErrorItem.Links links = new ApiError.ErrorItem.Links(requestURL);
         ApiError.ErrorItem errorItem = new ApiError.ErrorItem(

@@ -38,7 +38,7 @@ public class UserUtils {
     }
 
     public static void cleanUpdates(Map<String, Object> updates) {
-        Set<String> keysToCheck = Set.of("firstName", "lastName", "email", "birthday");
+        Set<String> keysToCheck = Set.of("first_name", "last_name", "email", "birthday");
 
         keysToCheck.forEach(key -> {
             if (updates.containsKey(key)) {
