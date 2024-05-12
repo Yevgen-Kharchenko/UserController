@@ -1,5 +1,11 @@
-package com.testTasks.testAssignment;
+package com.testTasks.testAssignment.service;
 
+import com.testTasks.testAssignment.exception.DataNotFoundException;
+import com.testTasks.testAssignment.mapper.UserMapper;
+import com.testTasks.testAssignment.model.User;
+import com.testTasks.testAssignment.model.UserRequestDto;
+import com.testTasks.testAssignment.model.UserResponseDto;
+import com.testTasks.testAssignment.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,7 +22,7 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 
-import static com.testTasks.testAssignment.UserUtils.getResponseEntity;
+import static com.testTasks.testAssignment.util.UserUtils.getResponseEntity;
 
 @Service
 @RequiredArgsConstructor
@@ -24,29 +30,29 @@ public class UserService {
     private final UserRepository repository;
     private final UserMapper mapper;
 
-    public ResponseEntity<UserDto> findUserById(Long id) {
-        User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
-        UserDto response = mapper.entityToDto(user);
+    public ResponseEntity<UserResponseDto> findUserById(Long id) {
+        User user = repository.findById(id).orElseThrow(() -> new DataNotFoundException("User not found with id = " + id));
+        UserResponseDto response = mapper.entityToResponseDto(user);
         return getResponseEntity(response);
 
     }
 
-    public ResponseEntity<List<UserDto>> findAllUsers(LocalDate from, LocalDate to, Integer limit, Integer offset) {
+    public ResponseEntity<List<UserResponseDto>> findAllUsers(LocalDate from, LocalDate to, Integer limit, Integer offset) {
         Pageable pageable = PageRequest.of(offset, limit);
         Page<User> userEntityList = repository.findAllByParam(from, to, pageable);
-        List<UserDto> response = mapper.listEntityToListDto(userEntityList.getContent());
+        List<UserResponseDto> response = mapper.listEntityToListDto(userEntityList.getContent());
         return getResponseEntity(response);
     }
 
-    public ResponseEntity<User> saveUser(User newUser) {
-
-        User response = repository.save(newUser);
+    public ResponseEntity<User> saveUser(UserRequestDto newUser) {
+        User request = mapper.requestDtoToEntity(newUser);
+        User response = repository.save(request);
         return getResponseEntity(response);
-
     }
 
     @Transactional
-    public ResponseEntity<User> updateUserById(Long id, User updateUser) {
+    public ResponseEntity<User> updateUserById(Long id, UserRequestDto request) {
+        User updateUser = mapper.requestDtoToEntity(request);
         User response = repository.findById(id)
                 .map(user -> {
                     user.setFirstName(updateUser.getFirstName());
@@ -57,19 +63,20 @@ public class UserService {
                     user.setPhone(updateUser.getPhone());
                     return repository.save(user);
                 })
-                .orElseThrow(() -> new UserNotFoundException(id));
+                .orElseThrow(() -> new DataNotFoundException("User not found with id = " + id));
         return getResponseEntity(response);
     }
 
 
     @Transactional
     public ResponseEntity<User> updateFields(Long id, Map<String, Object> updates) {
-        User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+        User user = repository.findById(id).orElseThrow(() -> new DataNotFoundException("User not found with id = " + id));
         applyUpdates(user, updates);
         User response = repository.save(user);
         return getResponseEntity(response);
     }
 
+    @Transactional
     public ResponseEntity<Void> deleteUserById(Long id) {
         repository.deleteById(id);
         return new ResponseEntity<>(HttpStatus.OK);

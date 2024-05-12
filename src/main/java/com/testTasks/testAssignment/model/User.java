@@ -1,4 +1,4 @@
-package com.testTasks.testAssignment;
+package com.testTasks.testAssignment.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;

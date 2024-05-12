@@ -2,14 +2,14 @@
   "groups": [
     {
       "name": "spring.application",
-      "type": "com.testTasks.testAssignment.Config$AppConfig",
-      "sourceType": "com.testTasks.testAssignment.Config",
+      "type": "com.testTasks.testAssignment.config.ApplicationProperties$AppConfig",
+      "sourceType": "com.testTasks.testAssignment.config.ApplicationProperties",
       "sourceMethod": "appConfig()"
     },
     {
       "name": "spring.datasource",
       "type": "javax.sql.DataSource",
-      "sourceType": "com.testTasks.testAssignment.Config",
+      "sourceType": "com.testTasks.testAssignment.config.ApplicationProperties",
       "sourceMethod": "dataSource()"
     }
   ],
@@ -17,13 +17,13 @@
     {
       "name": "spring.application.age",
       "type": "java.lang.Integer",
-      "sourceType": "com.testTasks.testAssignment.Config$AppConfig",
+      "sourceType": "com.testTasks.testAssignment.config.ApplicationProperties$AppConfig",
       "defaultValue": 0
     },
     {
       "name": "spring.application.min-birthday",
       "type": "java.lang.String",
-      "sourceType": "com.testTasks.testAssignment.Config$AppConfig"
+      "sourceType": "com.testTasks.testAssignment.config.ApplicationProperties$AppConfig"
     }
   ],
   "hints": []

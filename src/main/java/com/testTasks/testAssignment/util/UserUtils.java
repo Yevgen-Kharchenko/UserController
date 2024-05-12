@@ -1,5 +1,7 @@
-package com.testTasks.testAssignment;
+package com.testTasks.testAssignment.util;
 
+import com.testTasks.testAssignment.exception.UserValidationException;
+import com.testTasks.testAssignment.model.UserRequestDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -8,6 +10,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Map;
 import java.util.Set;
+
+import static java.util.Objects.isNull;
 
 public class UserUtils {
 
@@ -45,5 +49,20 @@ public class UserUtils {
             }
         });
         updates.remove("id");
+    }
+
+    public static void requiredFieldValidation(UserRequestDto requestDto) {
+        if (isNull(requestDto.getFirstName())) {
+            throw new UserValidationException("The parameter 'first_name' is required");
+        }
+        if (isNull(requestDto.getLastName())) {
+            throw new UserValidationException("The parameter 'last_name' is required");
+        }
+        if (isNull(requestDto.getEmail())) {
+            throw new UserValidationException("The parameter 'email' is required");
+        }
+        if (isNull(requestDto.getBirthday())) {
+            throw new UserValidationException("The parameter 'birthday' is required");
+        }
     }
 }

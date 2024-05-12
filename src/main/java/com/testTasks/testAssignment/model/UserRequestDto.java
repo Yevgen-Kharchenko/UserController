@@ -1,4 +1,4 @@
-package com.testTasks.testAssignment;
+package com.testTasks.testAssignment.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,11 +10,7 @@ import java.time.LocalDate;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class UserDto implements Serializable {
-
-    @Schema(description = "User`s Id", example = "5")
-    @JsonProperty(value = "id", required = true)
-    private Long id;
+public class UserRequestDto implements Serializable {
 
     @Schema(description = "User`s name", example = "Frank")
     @JsonProperty(value = "first_name", required = true)

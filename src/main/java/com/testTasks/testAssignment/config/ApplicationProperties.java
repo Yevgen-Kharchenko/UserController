@@ -1,4 +1,4 @@
-package com.testTasks.testAssignment;
+package com.testTasks.testAssignment.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -10,7 +10,7 @@ import javax.sql.DataSource;
 
 
 @Configuration
-public class Config {
+public class ApplicationProperties {
 
     @Bean
     @ConfigurationProperties(prefix = "spring.datasource")

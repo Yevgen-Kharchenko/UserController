@@ -1,5 +1,11 @@
-package com.testTasks.testAssignment;
+package com.testTasks.testAssignment.rest;
 
+import com.testTasks.testAssignment.config.ApplicationProperties;
+import com.testTasks.testAssignment.exception.UserValidationException;
+import com.testTasks.testAssignment.model.User;
+import com.testTasks.testAssignment.model.UserRequestDto;
+import com.testTasks.testAssignment.model.UserResponseDto;
+import com.testTasks.testAssignment.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -24,10 +30,11 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-import static com.testTasks.testAssignment.UserUtils.cleanUpdates;
-import static com.testTasks.testAssignment.UserUtils.isValidBirthday;
-import static com.testTasks.testAssignment.UserUtils.isValidDateFormat;
-import static com.testTasks.testAssignment.UserUtils.isValidEmail;
+import static com.testTasks.testAssignment.util.UserUtils.cleanUpdates;
+import static com.testTasks.testAssignment.util.UserUtils.isValidBirthday;
+import static com.testTasks.testAssignment.util.UserUtils.isValidDateFormat;
+import static com.testTasks.testAssignment.util.UserUtils.isValidEmail;
+import static com.testTasks.testAssignment.util.UserUtils.requiredFieldValidation;
 import static java.util.Objects.isNull;
 
 @RestController
@@ -36,19 +43,19 @@ import static java.util.Objects.isNull;
 public class UserController {
 
     private final UserService service;
-    private final Config config;
+    private final ApplicationProperties applicationProperties;
 
     @Operation(summary = "Obtaining data about the user by id")
     @ApiResponse(responseCode = "200", description = "Ok", content = {@Content(mediaType = "application/json",
-            schema = @Schema(implementation = UserDto.class))})
+            schema = @Schema(implementation = UserResponseDto.class))})
     @GetMapping("/{id}")
-    public ResponseEntity<UserDto> getUser(@PathVariable Long id) {
+    public ResponseEntity<UserResponseDto> getUser(@PathVariable Long id) {
         return service.findUserById(id);
     }
 
     @Operation(summary = "Obtaining user data")
     @ApiResponse(responseCode = "200", description = "Ok", content = {@Content(mediaType = "application/json",
-            schema = @Schema(implementation = UserDto.class))})
+            schema = @Schema(implementation = UserResponseDto.class))})
     @Parameters({
             @Parameter(name = "from", description = "Date of birth from which to search for users."),
             @Parameter(name = "to", description = "Date of birth to search for users."),
@@ -56,44 +63,46 @@ public class UserController {
             @Parameter(name = "offset", description = "Offset (from which element to return). Default value = 0")
     })
     @GetMapping("/")
-    public ResponseEntity<List<UserDto>> getAllUsers(
+    public ResponseEntity<List<UserResponseDto>> getAllUsers(
             @RequestParam(required = false, name = "from") LocalDate from,
             @RequestParam(required = false, name = "to") LocalDate to,
             @RequestParam(required = false, name = "limit", defaultValue = "3") Integer limit,
             @RequestParam(required = false, name = "offset", defaultValue = "0") Integer offset) {
         if (isNull(to)) {
-            to = LocalDate.now().minusYears(config.appConfig().getAge());
+            to = LocalDate.now().minusYears(applicationProperties.appConfig().getAge());
         }
         if (isNull(from)) {
-            from = LocalDate.parse(config.appConfig().getMinBirthday());
+            from = LocalDate.parse(applicationProperties.appConfig().getMinBirthday());
         }
         if (from.isAfter(to)) {
-            throw new UserNotFoundException(1L
-//                    "Parameter 'from' cannot be after 'to'"
-            );
+            throw new UserValidationException("Parameter 'from' cannot be after 'to'");
         }
         return service.findAllUsers(from, to, limit, offset);
     }
 
     @PostMapping("/")
-    public ResponseEntity<User> createNew(@Valid @RequestBody User newUser) {
+    public ResponseEntity<User> createNew(@Valid @RequestBody UserRequestDto newUser) {
+        requiredFieldValidation(newUser);
         if (!isValidDateFormat(newUser.getBirthday().toString())) {
-            throw new UserNotFoundException(1L);
+            throw new UserValidationException("Invalid date format. Use the correct YYYY-MM-DD format");
         }
-        if (!isValidBirthday(newUser.getBirthday(), config.appConfig().getAge())) {
-            throw new UserNotFoundException(1L);
+        if (!isValidBirthday(newUser.getBirthday(), applicationProperties.appConfig().getAge())) {
+            throw new UserValidationException("User must be " + applicationProperties.appConfig().getAge()
+                    + " years old. Try later");
         }
         return service.saveUser(newUser);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id,
-                                           @Valid @RequestBody User updateUser) {
+                                           @Valid @RequestBody UserRequestDto updateUser) {
+        requiredFieldValidation(updateUser);
         if (!isValidDateFormat(updateUser.getBirthday().toString())) {
-            throw new UserNotFoundException(1L);
+            throw new UserValidationException("Invalid date format. Use the correct YYYY-MM-DD format");
         }
-        if (!isValidBirthday(updateUser.getBirthday(), config.appConfig().getAge())) {
-            throw new UserNotFoundException(1L);
+        if (!isValidBirthday(updateUser.getBirthday(), applicationProperties.appConfig().getAge())) {
+            throw new UserValidationException("User must be " + applicationProperties.appConfig().getAge()
+                    + " years old. Try later");
         }
         return service.updateUserById(id, updateUser);
     }
@@ -103,14 +112,15 @@ public class UserController {
                                              @Valid @RequestBody Map<String, Object> updates) {
         cleanUpdates(updates);
         if (updates.containsKey("email") && !isValidEmail((String) updates.get("email"))) {
-            throw new UserNotFoundException(1L);
+            throw new UserValidationException("Invalid email format");
         }
         if (updates.containsKey("birthday") && !isValidDateFormat((String) updates.get("birthday"))) {
-            throw new UserNotFoundException(1L);
+            throw new UserValidationException("Invalid date format. Use the correct YYYY-MM-DD format");
         }
         if (updates.containsKey("birthday") && !isValidBirthday(LocalDate.parse((String) updates.get("birthday")),
-                config.appConfig().getAge())) {
-            throw new UserNotFoundException(1L);
+                applicationProperties.appConfig().getAge())) {
+            throw new UserValidationException("User must be " + applicationProperties.appConfig().getAge()
+                    + " years old. Try later");
         }
         return service.updateFields(id, updates);
     }

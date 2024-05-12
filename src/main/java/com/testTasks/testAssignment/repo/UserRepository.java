@@ -1,5 +1,6 @@
-package com.testTasks.testAssignment;
+package com.testTasks.testAssignment.repo;
 
+import com.testTasks.testAssignment.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
