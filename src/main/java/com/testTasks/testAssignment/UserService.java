@@ -7,9 +7,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.lang.reflect.Field;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Map;
 
 import static com.testTasks.testAssignment.UserUtils.getResponseEntity;
 
@@ -18,6 +23,7 @@ import static com.testTasks.testAssignment.UserUtils.getResponseEntity;
 public class UserService {
     private final UserRepository repository;
     private final UserMapper mapper;
+
     public ResponseEntity<UserDto> findUserById(Long id) {
         User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
         UserDto response = mapper.entityToDto(user);
@@ -33,23 +39,61 @@ public class UserService {
     }
 
     public ResponseEntity<User> saveUser(User newUser) {
+
         User response = repository.save(newUser);
         return getResponseEntity(response);
+
     }
 
+    @Transactional
     public ResponseEntity<User> updateUserById(Long id, User updateUser) {
-        User response = repository.save(updateUser);
+        User response = repository.findById(id)
+                .map(user -> {
+                    user.setFirstName(updateUser.getFirstName());
+                    user.setLastName(updateUser.getLastName());
+                    user.setEmail(updateUser.getEmail());
+                    user.setBirthday(updateUser.getBirthday());
+                    user.setAddress(updateUser.getAddress());
+                    user.setPhone(updateUser.getPhone());
+                    return repository.save(user);
+                })
+                .orElseThrow(() -> new UserNotFoundException(id));
         return getResponseEntity(response);
     }
 
 
-    public ResponseEntity<User> updateFields(User newUser) {
-        User response = repository.save(newUser);
+    @Transactional
+    public ResponseEntity<User> updateFields(Long id, Map<String, Object> updates) {
+        User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+        applyUpdates(user, updates);
+        User response = repository.save(user);
         return getResponseEntity(response);
     }
 
     public ResponseEntity<Void> deleteUserById(Long id) {
         repository.deleteById(id);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    private void applyUpdates(User user, Map<String, Object> updates) {
+        Class<?> clazz = user.getClass();
+        updates.forEach((key, value) -> {
+            try {
+                Field field = clazz.getDeclaredField(key);
+                field.setAccessible(true);
+                if (field.getType() == LocalDate.class && value instanceof String) {
+                    try {
+                        LocalDate dateValue = LocalDate.parse((String) value, DateTimeFormatter.ISO_LOCAL_DATE);
+                        field.set(user, dateValue);
+                    } catch (DateTimeParseException e) {
+                        throw new IllegalArgumentException("Invalid date format for " + key);
+                    }
+                } else {
+                    field.set(user, value);
+                }
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                throw new RuntimeException("Error updating field: " + key, e);
+            }
+        });
     }
 }

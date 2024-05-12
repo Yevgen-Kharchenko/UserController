@@ -11,6 +11,7 @@ import java.time.LocalDate;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-   @Query("SELECT u FROM User as u WHERE u.birthday >= :from AND u.birthday <= :to")
-   Page<User> findAllByParam(@Param("from") LocalDate from, @Param("to") LocalDate to, Pageable pageable);
+    @Query("SELECT u FROM User as u WHERE u.birthday >= :from AND u.birthday <= :to")
+    Page<User> findAllByParam(@Param("from") LocalDate from, @Param("to") LocalDate to, Pageable pageable);
+
 }

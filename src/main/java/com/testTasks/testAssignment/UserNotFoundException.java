@@ -1,7 +1,7 @@
 package com.testTasks.testAssignment;
 
 
-public class UserNotFoundException extends RuntimeException  {
+public class UserNotFoundException extends RuntimeException {
     private Long id;
 
     public UserNotFoundException(Long id) {

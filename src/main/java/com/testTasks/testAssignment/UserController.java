@@ -22,6 +22,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+
+import static com.testTasks.testAssignment.UserUtils.cleanUpdates;
+import static com.testTasks.testAssignment.UserUtils.isValidBirthday;
+import static com.testTasks.testAssignment.UserUtils.isValidDateFormat;
+import static com.testTasks.testAssignment.UserUtils.isValidEmail;
 import static java.util.Objects.isNull;
 
 @RestController
@@ -71,18 +77,42 @@ public class UserController {
 
     @PostMapping("/")
     public ResponseEntity<User> createNew(@Valid @RequestBody User newUser) {
+        if (!isValidDateFormat(newUser.getBirthday().toString())) {
+            throw new UserNotFoundException(1L);
+        }
+        if (!isValidBirthday(newUser.getBirthday(), config.appConfig().getAge())) {
+            throw new UserNotFoundException(1L);
+        }
         return service.saveUser(newUser);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id,
                                            @Valid @RequestBody User updateUser) {
+        if (!isValidDateFormat(updateUser.getBirthday().toString())) {
+            throw new UserNotFoundException(1L);
+        }
+        if (!isValidBirthday(updateUser.getBirthday(), config.appConfig().getAge())) {
+            throw new UserNotFoundException(1L);
+        }
         return service.updateUserById(id, updateUser);
     }
 
-    @PatchMapping("/")
-    public ResponseEntity<User> updateFields(@Valid @RequestBody User newUser) {
-        return service.updateFields(newUser);
+    @PatchMapping("/{id}")
+    public ResponseEntity<User> updateFields(@PathVariable Long id,
+                                             @Valid @RequestBody Map<String, Object> updates) {
+        cleanUpdates(updates);
+        if (updates.containsKey("email") && !isValidEmail((String) updates.get("email"))) {
+            throw new UserNotFoundException(1L);
+        }
+        if (updates.containsKey("birthday") && !isValidDateFormat((String) updates.get("birthday"))) {
+            throw new UserNotFoundException(1L);
+        }
+        if (updates.containsKey("birthday") && !isValidBirthday(LocalDate.parse((String) updates.get("birthday")),
+                config.appConfig().getAge())) {
+            throw new UserNotFoundException(1L);
+        }
+        return service.updateFields(id, updates);
     }
 
     @DeleteMapping("/{id}")
