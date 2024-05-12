@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,6 +41,7 @@ import static com.testTasks.testAssignment.util.UserUtils.isValidEmail;
 import static com.testTasks.testAssignment.util.UserUtils.requiredFieldValidation;
 import static java.util.Objects.isNull;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/users")
 @AllArgsConstructor
@@ -59,6 +61,7 @@ public class UserController {
     @Operation(summary = "Obtaining data about the user by id")
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDto> getUser(@PathVariable Long id) {
+        log.info("Fetching user by ID: {}", id);
         return service.findUserById(id);
     }
 
@@ -92,6 +95,7 @@ public class UserController {
         if (from.isAfter(to)) {
             throw new UserValidationException("Parameter 'from' cannot be after 'to'");
         }
+        log.info("Fetching all users from {} to {}, limit {}, offset {}", from, to, limit, offset);
         return service.findAllUsers(from, to, limit, offset);
     }
 
@@ -111,6 +115,7 @@ public class UserController {
             throw new UserValidationException("User must be " + applicationProperties.appConfig().getAge()
                     + " years old. Try later");
         }
+        log.info("Creating a new user with email: {}", newUser.getEmail());
         return service.saveUser(newUser);
     }
 
@@ -134,6 +139,7 @@ public class UserController {
             throw new UserValidationException("User must be " + applicationProperties.appConfig().getAge()
                     + " years old and the value must be before the current date.");
         }
+        log.info("Updating user ID: {}", id);
         return service.updateUserById(id, updateUser);
     }
 
@@ -176,6 +182,7 @@ public class UserController {
             throw new UserValidationException("User must be " + applicationProperties.appConfig().getAge()
                     + " years old. Try later");
         }
+        log.info("Updating fields for user ID: {}", id);
         return service.updateFields(id, updates);
     }
 
@@ -189,6 +196,7 @@ public class UserController {
     @Operation(summary = "Soft delete of an existing user")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> removeUser(@PathVariable Long id) {
+        log.info("Deleting user ID: {}", id);
         return service.deleteUserById(id);
     }
 }
