@@ -1,8 +1,11 @@
 # maven #
 /log/
-/target/
+target/
 !.mvn/wrapper/maven-wrapper.jar
 
+*.lst
+*.iml
+.idea
 # jib build folder #
 /build
 /build/
