@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,10 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.util.List;
 import static java.util.Objects.isNull;
-import static java.util.Objects.nonNull;
+
 @RestController
 @RequestMapping("/api/users")
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class UserController {
 
     private final UserService service;
@@ -58,29 +58,30 @@ public class UserController {
         if (isNull(to)) {
             to = LocalDate.now().minusYears(config.appConfig().getAge());
         }
-        if (nonNull(from)) {
-            if (from.isAfter(to)) {
-                throw new UserNotFoundException(1L
-//                    "Parameter 'from' cannot be after 'to'"
-                );
-            }
+        if (isNull(from)) {
+            from = LocalDate.parse(config.appConfig().getMinBirthday());
         }
-        return service.findAllUsers();
+        if (from.isAfter(to)) {
+            throw new UserNotFoundException(1L
+//                    "Parameter 'from' cannot be after 'to'"
+            );
+        }
+        return service.findAllUsers(from, to, limit, offset);
     }
 
     @PostMapping("/")
-    public ResponseEntity<UserEntity> createNew(@Valid @RequestBody UserEntity newUser) {
+    public ResponseEntity<User> createNew(@Valid @RequestBody User newUser) {
         return service.saveUser(newUser);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserEntity> updateUser(@PathVariable Long id,
-                                                 @Valid @RequestBody UserEntity updateUser) {
+    public ResponseEntity<User> updateUser(@PathVariable Long id,
+                                           @Valid @RequestBody User updateUser) {
         return service.updateUserById(id, updateUser);
     }
 
     @PatchMapping("/")
-    public ResponseEntity<UserEntity> updateFields(@Valid @RequestBody UserEntity newUser) {
+    public ResponseEntity<User> updateFields(@Valid @RequestBody User newUser) {
         return service.updateFields(newUser);
     }
 

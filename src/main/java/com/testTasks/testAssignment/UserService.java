@@ -1,10 +1,14 @@
 package com.testTasks.testAssignment;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static com.testTasks.testAssignment.UserUtils.getResponseEntity;
@@ -15,31 +19,32 @@ public class UserService {
     private final UserRepository repository;
     private final UserMapper mapper;
     public ResponseEntity<UserDto> findUserById(Long id) {
-        UserEntity user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+        User user = repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
         UserDto response = mapper.entityToDto(user);
         return getResponseEntity(response);
 
     }
 
-    public ResponseEntity<List<UserDto>> findAllUsers() {
-        List<UserEntity> userEntityList = (List<UserEntity>) repository.findAll();
-        List<UserDto> response = mapper.listEntityToListDto(userEntityList);
+    public ResponseEntity<List<UserDto>> findAllUsers(LocalDate from, LocalDate to, Integer limit, Integer offset) {
+        Pageable pageable = PageRequest.of(offset, limit);
+        Page<User> userEntityList = repository.findAllByParam(from, to, pageable);
+        List<UserDto> response = mapper.listEntityToListDto(userEntityList.getContent());
         return getResponseEntity(response);
     }
 
-    public ResponseEntity<UserEntity> saveUser(UserEntity newUser) {
-        UserEntity response = repository.save(newUser);
+    public ResponseEntity<User> saveUser(User newUser) {
+        User response = repository.save(newUser);
         return getResponseEntity(response);
     }
 
-    public ResponseEntity<UserEntity> updateUserById(Long id, UserEntity updateUser) {
-        UserEntity response = repository.save(updateUser);
+    public ResponseEntity<User> updateUserById(Long id, User updateUser) {
+        User response = repository.save(updateUser);
         return getResponseEntity(response);
     }
 
 
-    public ResponseEntity<UserEntity> updateFields(UserEntity newUser) {
-        UserEntity response = repository.save(newUser);
+    public ResponseEntity<User> updateFields(User newUser) {
+        User response = repository.save(newUser);
         return getResponseEntity(response);
     }
 

@@ -24,7 +24,7 @@ import java.time.LocalDate;
 @Table(name = "\"user\"")
 @SQLDelete(sql = "UPDATE \"user\" SET deleted = true WHERE id=?")
 @SQLRestriction("deleted=false")
-public class UserEntity {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

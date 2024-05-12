@@ -17,6 +17,12 @@
     {
       "name": "spring.application.age",
       "type": "java.lang.Integer",
+      "sourceType": "com.testTasks.testAssignment.Config$AppConfig",
+      "defaultValue": 0
+    },
+    {
+      "name": "spring.application.min-birthday",
+      "type": "java.lang.String",
       "sourceType": "com.testTasks.testAssignment.Config$AppConfig"
     }
   ],

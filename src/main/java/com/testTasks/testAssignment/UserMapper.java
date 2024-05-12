@@ -8,11 +8,11 @@ import java.util.List;
 @Mapper(componentModel = "spring", nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
 public interface UserMapper {
 
-    UserDto entityToDto(UserEntity userEntity);
+    UserDto entityToDto(User user);
 
-    UserEntity dtoToEntity(UserDto userDto);
+    User dtoToEntity(UserDto userDto);
 
-    List<UserDto> listEntityToListDto(List<UserEntity> userEntityList);
+    List<UserDto> listEntityToListDto(List<User> userList);
 
-    List<UserEntity>   listDtoToListEntity(List<UserDto> userDtoList);
+    List<User>   listDtoToListEntity(List<UserDto> userDtoList);
 }

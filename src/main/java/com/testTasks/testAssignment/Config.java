@@ -30,5 +30,6 @@ public class Config {
     @Data
     public static class AppConfig {
         private int age;
+        private String minBirthday;
     }
 }
